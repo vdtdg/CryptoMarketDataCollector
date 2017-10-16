@@ -62,6 +62,7 @@ def main(market,coin, interval):
     ## SQLAlchemy DBsession ##
     session = DBSession()
 
+    # Request the financial data from the API
     try:
         s = requests.Session()
         api_url = 'https://bittrex.com/Api/v2.0/pub/market/GetTicks?marketName='+market+'-'\
