@@ -1,5 +1,5 @@
 # BittrexDataCollector
-This application will collect sort, and organize financial data from a list of Crypto currencies.
+This application will collect sort, and organize financial data from a list of Crypto currencies. Using the Bittrex API. You can set the market that you want to analyze, the coins in that market, and the time intervals you want to collect data from. 
 
 This application requires Python 3+
 
