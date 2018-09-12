@@ -5,9 +5,7 @@ any software that can deal with CSV files. (exported from .db files) '''
 
 
 __title__ = 'Bittrex Data Collector'
-__author__ = 'Jacob Weeks'
 __license__ = 'MIT'
-__copyright__ = 'Copyright 2017, Jacob Weeks'
 
 
 import requests
@@ -80,9 +78,10 @@ def main(market,coin, interval):
 
     return
 
+
 if __name__ == "__main__":
     for interval in INTERVAL_LIST:
         for coin in COIN_LIST:
-            main(MARKET,coin,interval)
+            main(MARKET, coin, interval)
 
 

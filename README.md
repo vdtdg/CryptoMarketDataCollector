@@ -1,25 +1,25 @@
-# BittrexDataCollector
-This application will collect sort, and organize financial data from a list of Crypto currencies. Using the Bittrex API. You can set the market that you want to analyze, the coins in that market, and the time intervals you want to collect data from. 
+# CryptoMarketDataCollector (CMDC)
+The goal of this project is to merge [WhiteRaBot17 Data Collector](https://github.com/WhiteRaBot17/BittrexDataCollector) and [ivopetiz crypto-database](https://github.com/ivopetiz/crypto-database).  
+
+This application will provide you a back-end for any project that would need cryptocurrencies market data.
+You will be able to store continuously live market data from any exchange in InfluxDB.   
+Some exchanges don't provide full historical data, but this application can mock by using other exchange's data (if you want to backtest a trading strategy for example).
+
+
+This application will collect sort, and organize financial data from a list of Crypto currencies, using [https://github.com/ccxt/ccxt](CCXT). You can set the market that you want to analyze, the coins in that market, and the time intervals you want to collect data from. 
 
 This application requires Python 3+
 
 
 #Instructions:
 
-In the BittrexDataCollector folder you will find a file called app.py. There are 3 global variables that
-need your attention.
+Configure the app  
 
-1. Set the Market you want to analyze.
-2. Set the list of coins you want to analyze in that market.
-3. Set the intervals of data that you want.
+Install dependencies :   
+```pip install -r requirements.txt```
 
+Install the database  
 
-In terminal change CD into the directory holding requirements.txt file.
+Configure the database  
 
-Enter the command "pip install -r requirements.txt"
-
-This will install the required libraries for using this application.
-
-Finally, CD into BittrexDataCollector and run python app.py
-
-Enjoy working with your data.
+Launch the app
