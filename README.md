@@ -13,7 +13,7 @@ This application requires Python 3.5+. Also, this has only been tested on Lubunt
 
 # Installation
 
-#### Requirements  
+### Requirements  
 Python 3.5+ required.
 
 The package ```python3-dev``` is required : ```sudo apt-get install python3-dev``` 
@@ -22,7 +22,7 @@ Python packages required : ```pip install -r requirements.txt```
 
 Not required, but advised if you want a nice visualization of your data : [Chronograf](https://portal.influxdata.com/downloads#influxdb).   
 
-#### Install the database  
+### Install the database  
 This tool uses InfluxDB, we're going to set up one. If you already have one, then go to ```src/config.py``` to connect to your db.
 
 Run these in the directory you want:   
@@ -43,10 +43,10 @@ No need to create user or db, it will be done by CMDC.
 
 # Instructions
 
-#### Configuration
+### Configuration
 In ```src/config```, you can find everything that can be configured, see the comments on each line for more info.
 
-#### Launch the app
+### Launch the app
 Simply ```python3 src/app.py```, no args needed, the config is made via ```src/config.py```.   
 
 
