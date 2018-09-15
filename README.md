@@ -11,7 +11,7 @@ This application will collect sort, and organize financial data from a list of C
 This application requires Python 3.5+. Also, this has only been tested on Lubuntu 18.04
 
 
-#Installation
+# Installation
 
 #### Requirements  
 Python 3.5+ required.
@@ -22,7 +22,7 @@ Python packages required : ```pip install -r requirements.txt```
 
 Not required, but advised if you want a nice visualization of your data : [Chronograf](https://portal.influxdata.com/downloads#influxdb).   
 
-####Install the database  
+#### Install the database  
 This tool uses InfluxDB, we're going to set up one. If you already have one, then go to ```src/config.py``` to connect to your db.
 
 Run these in the directory you want:   
@@ -41,7 +41,7 @@ influx
 
 No need to create user or db, it will be done by CMDC.
 
-#Instructions
+# Instructions
 
 #### Configuration
 In ```src/config```, you can find everything that can be configured, see the comments on each line for more info.
