@@ -5,8 +5,8 @@ a local InfluxDB instance. """
 
 from influxdb import InfluxDBClient
 from influxdb import SeriesHelper
-from config import *
 
+from config import *
 
 __title__ = 'Crypto Market Data Collector'
 __license__ = 'MIT'
@@ -18,6 +18,8 @@ class InsertMarketDataHelper(SeriesHelper):
         series_name = '{exchange}.{market}.{duration}'
 
         fields = ['time', 'open', 'high', 'low', 'close', 'volume']
+
+        timestamp = fields[0]  # get the timestamp of the candle
 
         tags = ['exchange', 'market', 'duration']
 
