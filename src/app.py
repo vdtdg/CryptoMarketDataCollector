@@ -5,10 +5,12 @@ a local InfluxDB instance. """
 __title__ = 'Crypto Market Data Collector'
 __license__ = 'MIT'
 
-import ccxt
 import time
 
-from helper import *
+import ccxt
+from influxdb import *
+
+from config import *
 
 
 def init():
@@ -46,15 +48,13 @@ def init():
 
     # Creating an initialization array. It will tell us if we already gathered the past data for a market.
     init_market = dict()
-    for market in markets:
-        for duration in durations:
-            for exchange in exchanges:
-                init_market[market+'-'+duration+'-'+exchange] = False
+    for ticker in tickers:
+        init_market[ticker] = False
 
     return engine, init_market
 
 
-def get_data(exchange_name, market, durations, init_dict, engine):
+def get_data(exchange_name, market, duration, init_dict, engine):
     # Init the exchange
     ex_c = getattr(ccxt, exchange_name)
     ex = ex_c({
@@ -69,49 +69,56 @@ def get_data(exchange_name, market, durations, init_dict, engine):
     if not ex.has['fetchOHLCV']:
         return
 
-    # Creating a correpondance between market IDs and market SYMBOLs
-    translate_id_symbol = dict()
-    for symbol in ex.symbols:
-        translate_id_symbol[ex.market_id(symbol)] = symbol
+    # Getting either 100 timeframe history or last candle
+    ticker = exchange_name + "." + market + "." + duration
+    mult = 1
+    if not init_dict[ticker]:
+        mult = 100
+        init_dict[ticker] = True
+    last_date = (ex.milliseconds() - mult * ex.parse_timeframe(duration) * 1000)
+    data = ex.fetchOHLCV(market, duration, since=last_date)
+    print("Retrieved {} {} {} candle : {}".format(exchange_name, market, duration, data[0]))
+    time.sleep(ex.rateLimit / 1000)
 
-    # Getting either max history or last candle for each durations
-    for duration in durations:
-        if not init_dict[market + '-' + duration + '-' + exchange_name]:
-            data = ex.fetchOHLCV(translate_id_symbol[market], duration)
-            init_dict[market + '-' + duration + '-' + exchange_name] = True
-        else:
-            last_date = (ex.milliseconds() - ex.parse_timeframe(duration) * 1000)
-            data = ex.fetchOHLCV(translate_id_symbol[market], duration, since=last_date)
-            print("Retrieved {} {} {} candle : {}".format(exchange_name, market, duration, data[0]))
-            time.sleep(ex.rateLimit / 1000)
+    # Storing data
+    json_body = []
+    for candle in data:
+        json_body.append({
+            "measurement": exchange_name,
+            "tags": {
+                "duration": duration,
+                "market": market
+            },
+            "time": candle[0],
+            "fields": {
+                "open": candle[1] + 0.0,
+                "high": candle[2] + 0.0,
+                "low": candle[3] + 0.0,
+                "close": candle[4] + 0.0,
+                "volume": candle[5] + 0.0
+            }
+        })
 
-        # Storing data
-        json_body = []
-        for candle in data:
-            json_body.append({
-                "measurement": exchange_name,
-                "tags": {
-                    "duration": duration,
-                    "market": market
-                },
-                "time": candle[0],
-                "fields": {
-                    "open": candle[1],
-                    "high": candle[2],
-                    "low": candle[3],
-                    "close": candle[4],
-                    "volume": candle[5]
-                }
-            })
-
-        engine.write_points(json_body, time_precision='ms')
+    # Then data is added into influxdb.
+    engine.write_points(json_body, time_precision='ms')
     return
+
+
+def parse_ticker(ticker):
+    ret = ticker.split(".")
+    err = ""
+    if len(ret) != 3:
+        err = "Wrong ticker : {}".format(ticker)
+    return ret[0], ret[1], ret[2], err
 
 
 if __name__ == "__main__":
     engine, init_dict = init()
 
     while True:
-        for market in markets:
-            for exchange in exchanges:
-                get_data(exchange, market, durations, init_dict, engine)
+        for ticker in tickers:
+            exchange, market, duration, err = parse_ticker(ticker)
+            if err == "":
+                get_data(exchange, market, duration, init_dict, engine)
+            else:
+                print(err)
