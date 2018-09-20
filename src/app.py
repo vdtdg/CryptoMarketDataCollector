@@ -5,15 +5,14 @@ a local InfluxDB instance. """
 __title__ = 'Crypto Market Data Collector'
 __license__ = 'MIT'
 
-import time
-
+import time, sys
 import ccxt
 from influxdb import *
-
+from gethistorical import *
 from config import *
 
 
-def init():
+def init_engine():
     # Create an engine that stores data in the influx db
     engine = InfluxDBClient(host=db_host, port=db_port, username=db_user, password=db_pw, database=db_name)
 
@@ -46,12 +45,16 @@ def init():
     # Creating an infinity retention policy so that data is not erased from the db
     engine.create_retention_policy('no_delete_policy', 'INF', replication="1", database=db_name, default=True)
 
+    return engine
+
+
+def init_market_array():
     # Creating an initialization array. It will tell us if we already gathered the past data for a market.
     init_market = dict()
     for ticker in tickers:
         init_market[ticker] = False
 
-    return engine, init_market
+    return init_market
 
 
 def get_data(exchange_name, market, duration, init_dict, engine):
@@ -104,6 +107,11 @@ def get_data(exchange_name, market, duration, init_dict, engine):
     return
 
 
+def get_historical_data(engine, ticker):
+    print("Not implemented yet")
+    pass
+
+
 def parse_ticker(ticker):
     ret = ticker.split(".")
     err = ""
@@ -113,12 +121,26 @@ def parse_ticker(ticker):
 
 
 if __name__ == "__main__":
-    engine, init_dict = init()
+    sys.argv.append("")
+    if sys.argv[1] == "get_history":
+        engine = init_engine()
+        get_historical_data(engine, sys.argv[2])
+    elif sys.argv[1] == "run":
+        engine = init_engine()
 
-    while True:
-        for ticker in tickers:
-            exchange, market, duration, err = parse_ticker(ticker)
-            if err == "":
-                get_data(exchange, market, duration, init_dict, engine)
-            else:
-                print(err)
+        init_dict = init_market_array()
+        while True:
+            for ticker in tickers:
+                exchange, market, duration, err = parse_ticker(ticker)
+                if err == "":
+                    get_data(exchange, market, duration, init_dict, engine)
+                else:
+                    print(err)
+    else:
+        print("Usage : python3 <path_to_src>/app.py [command] [value]\n\n"
+              + "Command list: \n"
+              + "  run : collect live data from the tickers specified in config.py\n"
+              + "  get_history : get the historical data from the ticker defined in value. See the config file for the syntax of the ticker.\n\n"
+              + "Examples :\n"
+              + "  python3 app.py get_history gdax.BTC/USD.1h\n"
+              + "  python3 app.py run\n")
