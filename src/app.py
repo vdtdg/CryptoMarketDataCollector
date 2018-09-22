@@ -8,7 +8,6 @@ __license__ = 'MIT'
 import time, sys
 import ccxt
 from influxdb import *
-from gethistorical import *
 from config import *
 
 
@@ -72,8 +71,18 @@ def get_data(exchange_name, market, duration, init_dict, engine):
     if not ex.has['fetchOHLCV']:
         return
 
-    # Getting either 100 timeframe history or last candle
     ticker = exchange_name + "." + market + "." + duration
+    ex_has_ticker = False
+    for t in ex.symbols:
+        if t == market:
+            ex_has_ticker = True
+            break
+
+    if not ex_has_ticker:
+        print("Can't get data from this ticker : {}".format(ticker))
+        return
+
+    # Getting either 100 timeframe history or last candle
     mult = 1
     if not init_dict[ticker]:
         mult = 100
@@ -83,6 +92,59 @@ def get_data(exchange_name, market, duration, init_dict, engine):
     print("Retrieved {} {} {} candle : {}".format(exchange_name, market, duration, data[0]))
     time.sleep(ex.rateLimit / 1000)
 
+    store_data(data, duration, engine, exchange_name, market)
+    return
+
+
+def get_historical_data(engine, ticker):
+    exchange, market, duration, err = parse_ticker(ticker)
+    if err != "":
+        print("Error parsing ticker : {}".format(err))
+        return
+
+    # Init the exchange
+    ex_c = getattr(ccxt, exchange)
+    ex = ex_c({
+        # 'apiKey': '',
+        # 'secret': '',
+        'timeout': 30000,
+        'enableRateLimit': True
+    })
+    ex.load_markets()
+
+    # We need to check if the exchange is able to return OHLCV data, else we get the ticker data TODO
+    if not ex.has['fetchOHLCV']:
+        return
+
+    ex_has_ticker = False
+    for t in ex.symbols:
+        if t == market:
+            ex_has_ticker = True
+            break
+
+    if not ex_has_ticker:
+        print("Can't get historical data from this ticker : {}".format(ticker))
+        return
+
+    print("Getting historical data of {}, be patient...".format(ticker))
+
+    mult = 200
+    start = ex.milliseconds() - mult * ex.parse_timeframe(duration) * 1000  # x1000 again to get millisec
+    count = 0
+    while True:
+        count += 1
+        # Get 1000 candles, then recalculate the since and start or whatever
+        data = ex.fetchOHLCV(market, duration, since=start, limit=mult+1)
+        print("... Fetched {} candles.".format(count * mult))
+        if not data or len(data) == 1:
+            print("Got full history of {}".format(ticker))
+            return
+        start = start - mult * ex.parse_timeframe(duration) * 1000
+        store_data(data, duration, engine, exchange, market)
+        time.sleep(1.1 * ex.rateLimit / 1000)
+
+
+def store_data(data, duration, engine, exchange_name, market):
     # Storing data
     json_body = []
     for candle in data:
@@ -104,12 +166,6 @@ def get_data(exchange_name, market, duration, init_dict, engine):
 
     # Then data is added into influxdb.
     engine.write_points(json_body, time_precision='ms')
-    return
-
-
-def get_historical_data(engine, ticker):
-    print("Not implemented yet")
-    pass
 
 
 def parse_ticker(ticker):
