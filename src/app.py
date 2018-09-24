@@ -5,9 +5,12 @@ a local InfluxDB instance. """
 __title__ = 'Crypto Market Data Collector'
 __license__ = 'MIT'
 
-import time, sys
+import sys
+import time
+
 import ccxt
 from influxdb import *
+
 from config import *
 
 
@@ -56,9 +59,53 @@ def init_market_array():
     return init_market
 
 
-def get_data(exchange_name, market, duration, init_dict, engine):
+def parse_timeframe(timeframe):
+    amount = int(timeframe[0:-1])
+    unit = timeframe[-1]
+    if 'y' in unit:
+        scale = 60 * 60 * 24 * 365
+    elif 'M' in unit:
+        scale = 60 * 60 * 24 * 30
+    elif 'w' in unit:
+        scale = 60 * 60 * 24 * 7
+    elif 'd' in unit:
+        scale = 60 * 60 * 24
+    elif 'h' in unit:
+        scale = 60 * 60
+    else:
+        scale = 60  # 1m by default
+    return amount * scale
+
+
+def parse_ticker(ticker):
+    ret = ticker.split(".")
+    err = ""
+    if len(ret) != 3:
+        err = "Wrong ticker : {}".format(ticker)
+    return ret[0], ret[1], ret[2], err
+
+
+def init_ticker_dict(tickers):
+    td = {}
+    for t in tickers:
+        e, m, du, err = parse_ticker(t)
+        if err != "":
+            return td
+        td[t] = {'date_last': 0,
+                 'duration': parse_timeframe(du)
+                 }
+
+    return td
+
+
+def get_data(ticker, ticker_dict, init_dict, engine):
+    exchange, market, duration, err = parse_ticker(ticker)
+    if err != "":
+        print("Error parsing ticker : {}".format(err))
+        return
+
     # Init the exchange
-    ex_c = getattr(ccxt, exchange_name)
+    ex_c = getattr(ccxt, exchange)
     ex = ex_c({
         # 'apiKey': '',
         # 'secret': '',
@@ -67,11 +114,11 @@ def get_data(exchange_name, market, duration, init_dict, engine):
     })
     ex.load_markets()
 
-    # We need to check if the exchange is able to return OHLCV data, else we get the ticker data TODO
+    # We need to check if the exchange is able to return OHLCV data
     if not ex.has['fetchOHLCV']:
+        print("Impossible to get OHLCV data from this exchange : {}".format(exchange))
         return
 
-    ticker = exchange_name + "." + market + "." + duration
     ex_has_ticker = False
     for t in ex.symbols:
         if t == market:
@@ -83,16 +130,15 @@ def get_data(exchange_name, market, duration, init_dict, engine):
         return
 
     # Getting either 100 timeframe history or last candle
-    mult = 1
+    mult = 2
     if not init_dict[ticker]:
         mult = 100
         init_dict[ticker] = True
     last_date = (ex.milliseconds() - mult * ex.parse_timeframe(duration) * 1000)
     data = ex.fetchOHLCV(market, duration, since=last_date)
-    print("Retrieved {} {} {} candle : {}".format(exchange_name, market, duration, data[0]))
-    time.sleep(ex.rateLimit / 1000)
+    print("Retrieved {} {} {} data : {}".format(exchange, market, duration, data))
 
-    store_data(data, duration, engine, exchange_name, market)
+    store_data(data, duration, engine, exchange, market)
     return
 
 
@@ -128,7 +174,7 @@ def get_historical_data(engine, ticker):
 
     print("Getting historical data of {}, be patient...".format(ticker))
 
-    mult = 200
+    mult = 200  # TODO : optimize this value according to the exchange.
     start = ex.milliseconds() - mult * ex.parse_timeframe(duration) * 1000  # x1000 again to get millisec
     count = 0
     while True:
@@ -168,14 +214,6 @@ def store_data(data, duration, engine, exchange_name, market):
     engine.write_points(json_body, time_precision='ms')
 
 
-def parse_ticker(ticker):
-    ret = ticker.split(".")
-    err = ""
-    if len(ret) != 3:
-        err = "Wrong ticker : {}".format(ticker)
-    return ret[0], ret[1], ret[2], err
-
-
 if __name__ == "__main__":
     sys.argv.append("")
     if sys.argv[1] == "get_history":
@@ -183,20 +221,25 @@ if __name__ == "__main__":
         get_historical_data(engine, sys.argv[2])
     elif sys.argv[1] == "run":
         engine = init_engine()
-
+        ticker_dict = init_ticker_dict(tickers)
         init_dict = init_market_array()
         while True:
-            for ticker in tickers:
-                exchange, market, duration, err = parse_ticker(ticker)
-                if err == "":
-                    get_data(exchange, market, duration, init_dict, engine)
+            for ticker in ticker_dict:
+                dl = ticker_dict[ticker]["date_last"]
+                d = ticker_dict[ticker]["duration"]
+                if time.time().__int__() > dl + (d/2).__int__():
+                    get_data(ticker, ticker_dict, init_dict, engine)
+                    ticker_dict[ticker]["date_last"] = time.time().__int__()
                 else:
-                    print(err)
+                    print("Nothing to do, sleeping...")
+                    time.sleep(5)
+
     else:
         print("Usage : python3 <path_to_src>/app.py [command] [value]\n\n"
               + "Command list: \n"
               + "  run : collect live data from the tickers specified in config.py\n"
-              + "  get_history : get the historical data from the ticker defined in value. See the config file for the syntax of the ticker.\n\n"
+              + "  get_history : get the historical data from the ticker defined in value. See the config file "
+              + "for the syntax of the ticker.\n\n"
               + "Examples :\n"
               + "  python3 app.py get_history gdax.BTC/USD.1h\n"
               + "  python3 app.py run\n")
