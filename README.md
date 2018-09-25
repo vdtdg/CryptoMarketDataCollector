@@ -48,19 +48,14 @@ In ```src/config```, you can find everything that can be configured, see the com
 
 ### Launch the app
 Simply ```python3 src/app.py run```, the config is made via ```src/config.py```.   
-
+If you want to get historical data about an exchange, do : ```python3 src/app.py get_history <ticker>``` where <ticker> is, for example : poloniex.BTC/USDT.1h.
 
 
 # What's next ?
-## v0.2 (oct. 2018)
-- Optimize the data collection intervals.     
-- Historical data can be downloaded by a special command (subject to availability of the data).  
-- Configuration change, you now can to pick more precisely the data you want to collect.  
-
-## v0.2.1 (mid oct. 2018)
-- Complete setup, launch only one command and it makes the complete installation.    
 
 ## v0.3 (nov. 2018)
 - Optional account data collection (trade history, portfolio etc...)     
+- Complete setup, launch only one command and it makes the complete installation.      
+- Can be deployed as a service.  
 
 ### ***v0.3** will be the last version, there will be no more functionnality afterwards. There might be correcting fixes nevertheless.*  
