@@ -114,7 +114,7 @@ def get_data(ticker, ticker_dict, init_dict, engine):
     })
     ex.load_markets()
 
-    # We need to check if the exchange is able to return OHLCV data
+    # We need to check if the exchange is able to return OHLCV data before doing anything.
     if not ex.has['fetchOHLCV']:
         print("Impossible to get OHLCV data from this exchange : {}".format(exchange))
         return
@@ -129,7 +129,7 @@ def get_data(ticker, ticker_dict, init_dict, engine):
         print("Can't get data from this ticker : {}".format(ticker))
         return
 
-    # Getting either 100 timeframe history or last candle
+    # Getting either 100 timeframe history or last candle (or approx.)
     mult = 2
     if not init_dict[ticker]:
         mult = 100
@@ -158,7 +158,7 @@ def get_historical_data(engine, ticker):
     })
     ex.load_markets()
 
-    # We need to check if the exchange is able to return OHLCV data, else we get the ticker data TODO
+    # We need to check if the exchange is able to return OHLCV data before doing anything.
     if not ex.has['fetchOHLCV']:
         return
 
@@ -215,11 +215,15 @@ def store_data(data, duration, engine, exchange_name, market):
 
 
 if __name__ == "__main__":
+    # Reading and parsing options.
     sys.argv.append("")
-    if sys.argv[1] == "get_history":
+    if sys.argv[1] == "get_history": # TODO : add a number of candle to get.
+        # In this case we just init the engine and start the process of carefully getting history data.
         engine = init_engine()
         get_historical_data(engine, sys.argv[2])
     elif sys.argv[1] == "run":
+        # In this case, we read and transform the list of tickers into a dict that will remember the last time
+        # the data was get. By doing so we reduce the number of API calls.
         engine = init_engine()
         ticker_dict = init_ticker_dict(tickers)
         init_dict = init_market_array()
