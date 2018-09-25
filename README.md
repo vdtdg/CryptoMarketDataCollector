@@ -48,7 +48,7 @@ In ```src/config```, you can find everything that can be configured, see the com
 
 ### Launch the app
 Simply ```python3 src/app.py run```, the config is made via ```src/config.py```.   
-If you want to get historical data about an exchange, do : ```python3 src/app.py get_history <ticker>``` where <ticker> is, for example : poloniex.BTC/USDT.1h.
+If you want to get historical data about an exchange, do : ```python3 src/app.py get_history <ticker>``` where 'ticker' is, for example : poloniex.BTC/USDT.1h (see config.py for more info on tickers).
 
 
 # What's next ?
