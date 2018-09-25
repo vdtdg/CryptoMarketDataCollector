@@ -47,7 +47,7 @@ No need to create user or db, it will be done by CMDC.
 In ```src/config```, you can find everything that can be configured, see the comments on each line for more info.
 
 ### Launch the app
-Simply ```python3 src/app.py```, no args needed, the config is made via ```src/config.py```.   
+Simply ```python3 src/app.py run```, the config is made via ```src/config.py```.   
 
 
 
