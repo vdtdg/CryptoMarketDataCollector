@@ -16,7 +16,10 @@ This application requires Python 3.5+. Also, this has only been tested on Lubunt
 ### Requirements  
 Python 3.5+ required.
 
-The package ```python3-dev``` is required : ```sudo apt-get install python3-dev``` 
+The package ```python3-dev``` and ```gcc``` are required : 
+```bash
+sudo apt-get install gcc python3-dev -y
+``` 
 
 Python packages required : ```pip install -r requirements.txt```
 
