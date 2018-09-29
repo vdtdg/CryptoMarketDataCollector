@@ -136,10 +136,13 @@ def get_data(ticker, ticker_dict, init_dict, engine):
         init_dict[ticker] = True
     last_date = (ex.milliseconds() - mult * ex.parse_timeframe(duration) * 1000)
     data = ex.fetchOHLCV(market, duration, since=last_date)
-    print("Retrieved {} {} {} data : {}".format(exchange, market, duration, data))
+    str_local_date = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime())
+    print("{} : Retrieved {} {} {} data : {}".format(str_local_date, exchange, market, duration, data))
 
     store_data(data, duration, engine, exchange, market)
-    return
+
+    # Getting the last candle date and returning it for sync purpose
+    return data[-1][0]
 
 
 def get_historical_data(engine, ticker, limit=""):
@@ -187,15 +190,15 @@ def get_historical_data(engine, ticker, limit=""):
         count += 1
         # Get 1000 candles, then recalculate the since and start or whatever
         data = ex.fetchOHLCV(market, duration, since=start, limit=mult+1)
-        print("... Fetched {} candles.".format(count * mult))
+        print("... Fetched {} candles.".format(count * mult), end='\r')
         if not data or len(data) == 1:
-            print("Got full history of {}".format(ticker))
+            print("\nGot full history of {}".format(ticker))
             return
         start = start - mult * ex.parse_timeframe(duration) * 1000
         store_data(data, duration, engine, exchange, market)
         time.sleep(1.1 * ex.rateLimit / 1000)
 
-    print("Got {}/{} candles of {}".format(count*mult, limit, ticker))
+    print("\nGot {}/{} candles of {}".format(count*mult, limit, ticker))
 
 
 def store_data(data, duration, engine, exchange_name, market):
@@ -241,10 +244,9 @@ if __name__ == "__main__":
                 dl = ticker_dict[ticker]["date_last"]
                 d = ticker_dict[ticker]["duration"]
                 if time.time().__int__() > dl + (d/2).__int__():
-                    get_data(ticker, ticker_dict, init_dict, engine)
-                    ticker_dict[ticker]["date_last"] = time.time().__int__()
+                    last_candle_timestamp = get_data(ticker, ticker_dict, init_dict, engine)
+                    ticker_dict[ticker]["date_last"] = int(last_candle_timestamp / 1000)  # Timestamp is in ms.
                 else:
-                    print("Nothing to do, sleeping...")
                     time.sleep(5)
 
     else:
