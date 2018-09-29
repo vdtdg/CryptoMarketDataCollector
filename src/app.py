@@ -142,7 +142,11 @@ def get_data(ticker, ticker_dict, init_dict, engine):
     return
 
 
-def get_historical_data(engine, ticker):
+def get_historical_data(engine, ticker, limit=""):
+    if limit == "":
+        limit = 1000000000000000
+    else:
+        limit = int(limit)
     exchange, market, duration, err = parse_ticker(ticker)
     if err != "":
         print("Error parsing ticker : {}".format(err))
@@ -177,7 +181,7 @@ def get_historical_data(engine, ticker):
     mult = 200  # TODO : optimize this value according to the exchange.
     start = ex.milliseconds() - mult * ex.parse_timeframe(duration) * 1000  # x1000 again to get millisec
     count = 0
-    while True:
+    while count*mult < limit:
         count += 1
         # Get 1000 candles, then recalculate the since and start or whatever
         data = ex.fetchOHLCV(market, duration, since=start, limit=mult+1)
@@ -188,6 +192,8 @@ def get_historical_data(engine, ticker):
         start = start - mult * ex.parse_timeframe(duration) * 1000
         store_data(data, duration, engine, exchange, market)
         time.sleep(1.1 * ex.rateLimit / 1000)
+
+    print("Got {}/{} candles of {}".format(count*mult, limit, ticker))
 
 
 def store_data(data, duration, engine, exchange_name, market):
@@ -217,10 +223,11 @@ def store_data(data, duration, engine, exchange_name, market):
 if __name__ == "__main__":
     # Reading and parsing options.
     sys.argv.append("")
-    if sys.argv[1] == "get_history": # TODO : add a number of candle to get.
+    if sys.argv[1] == "get_history":
         # In this case we just init the engine and start the process of carefully getting history data.
+        sys.argv.append("")
         engine = init_engine()
-        get_historical_data(engine, sys.argv[2])
+        get_historical_data(engine, sys.argv[2], sys.argv[3])
     elif sys.argv[1] == "run":
         # In this case, we read and transform the list of tickers into a dict that will remember the last time
         # the data was get. By doing so we reduce the number of API calls.
@@ -239,11 +246,12 @@ if __name__ == "__main__":
                     time.sleep(5)
 
     else:
-        print("Usage : python3 <path_to_src>/app.py [command] [value]\n\n"
+        print("Usage : python3 <path_to_src>/app.py [command] [value] [number]\n\n"
               + "Command list: \n"
               + "  run : collect live data from the tickers specified in config.py\n"
-              + "  get_history : get the historical data from the ticker defined in value. See the config file "
-              + "for the syntax of the ticker.\n\n"
+              + "  get_history : get the historical data from the ticker defined in value. You can set a maximum"
+                "number of period you want to download. See the config file for the syntax of the ticker.\n\n"
               + "Examples :\n"
               + "  python3 app.py get_history gdax.BTC/USD.1h\n"
+              + "  python3 app.py get_history gdax.BTC/USD.1h 1500\n"
               + "  python3 app.py run\n")
