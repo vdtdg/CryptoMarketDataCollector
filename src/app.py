@@ -179,6 +179,8 @@ def get_historical_data(engine, ticker, limit=""):
     print("Getting historical data of {}, be patient...".format(ticker))
 
     mult = 200  # TODO : optimize this value according to the exchange.
+    if exchange == 'poloniex':
+        mult = 1000
     start = ex.milliseconds() - mult * ex.parse_timeframe(duration) * 1000  # x1000 again to get millisec
     count = 0
     while count*mult < limit:
