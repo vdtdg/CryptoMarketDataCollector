@@ -53,6 +53,18 @@ In ```src/config```, you can find everything that can be configured, see the com
 Simply ```python3 src/app.py run```, the config is made via ```src/config.py```.   
 If you want to get historical data about an exchange, do : ```python3 src/app.py get_history <ticker>``` where 'ticker' is, for example : poloniex.BTC/USDT.1h (see config.py for more info on tickers).
 
+### Launch it as a service
+Complete fields in the ```cmdc.service``` file. You just have to put your unix username and paths to python and the source.   
+Then :   
+```bash
+sudo cp cmdc.service /lib/systemd/system/cmdc.service
+sudo systemctl start cmdc.service
+```
+Make sure you have configured everything you want. Nonetheless, if you need to add or remove a ticker from the config file, just do it and then :
+```bash
+sudo systemctl reload cmdc.service
+```
+
 
 # What's next ?
 

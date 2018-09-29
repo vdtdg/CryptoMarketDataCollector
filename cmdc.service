@@ -1,0 +1,15 @@
+[Unit]
+Description=CryptoMarketDataCollector
+After=influxdb.service
+StartLimitIntervalSec=10
+StartLimitBurst=50
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=10
+User=<YOUR USERNAME>
+ExecStart=<PATH TO PYTHON3 (CAN BE A VIRTUAL ENV.)> <PATH TO CMDC>/src/app.py run
+
+[Install]
+WantedBy=multi-user.target
