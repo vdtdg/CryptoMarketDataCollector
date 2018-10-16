@@ -225,7 +225,7 @@ def store_data(data, duration, engine, exchange_name, market):
     engine.write_points(json_body, time_precision='ms')
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # TODO : add tickers verification
     # Reading and parsing options.
     sys.argv.append("")
     if sys.argv[1] == "get_history":
@@ -243,12 +243,11 @@ if __name__ == "__main__":
             for ticker in ticker_dict:
                 dl = ticker_dict[ticker]["date_last"]
                 d = ticker_dict[ticker]["duration"]
-                if time.time().__int__() > dl + (d/2).__int__():
+                if time.time() > dl + d:
                     last_candle_timestamp = get_data(ticker, ticker_dict, init_dict, engine)
                     ticker_dict[ticker]["date_last"] = int(last_candle_timestamp / 1000)  # Timestamp is in ms.
                 else:
-                    time.sleep(5)
-
+                    time.sleep(10)
     else:
         print("Usage : python3 <path_to_src>/app.py [command] [value] [number]\n\n"
               + "Command list: \n"

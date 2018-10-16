@@ -71,6 +71,6 @@ sudo systemctl reload cmdc.service
 ## v0.3 (nov. 2018)
 - Optional account data collection (trade history, portfolio etc...)     
 - Complete setup, launch only one command and it makes the complete installation.      
-- Can be deployed as a service.  
+- ~~Can be deployed as a service.~~ (Done)
 
 ### ***v0.3** will be the last version, there will be no more functionnality afterwards. There might be correcting fixes nevertheless.*  
