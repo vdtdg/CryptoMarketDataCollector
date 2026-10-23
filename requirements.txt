@@ -1,5 +1,5 @@
 eth-utils==1.2.2
-certifi==2024.7.4
+certifi==2026.10.19
 requests==2.33.0
 ccxt==1.17.276
 influxdb==5.2.0
